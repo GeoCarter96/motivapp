@@ -2,7 +2,7 @@
 import { motion, Reorder, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
-import { Timer, Trash2, CheckCircle2, ArrowLeft, Image as ImageIcon, History, Quote } from 'lucide-react';
+import { Timer, Trash2, CheckCircle2, ArrowLeft, Image as ImageIcon, X, History, Quote } from 'lucide-react';
 
 
 interface Subtask {
@@ -205,30 +205,48 @@ export default function GoalsPage() {
 </motion.div>
 
 
-    {visionImage ? (
-      <>
-        <img 
-          src={visionImage} 
-          className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700" 
-          alt="Vision" 
-        />
-        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-          <p className="text-white font-bold text-sm bg-black/40 px-4 py-2 rounded-full backdrop-blur-md">Change Vision</p>
-        </div>
-      </>
-    ) : (
-      <div className="flex flex-col items-center justify-center h-full text-sky-800/40 border-4 border-dashed border-sky-200/50 rounded-[35px]">
-        <ImageIcon size={48} strokeWidth={1.5} />
-        <p className="text-sm font-black mt-4 uppercase tracking-widest">Vision Board</p>
-        <p className="text-xs opacity-60">Click to upload focus</p>
+   <div className="relative w-full h-48 bg-white/20 dark:bg-slate-800/20 backdrop-blur-md rounded-[40px] border border-white/30 dark:border-slate-700/50 overflow-hidden group">
+  {visionImage ? (
+    <>
+      <img 
+        src={visionImage} 
+        className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700" 
+        alt="Vision" 
+      />
+      {/* Remove Button - Top Right */}
+      <button 
+        onClick={(e) => {
+          e.preventDefault();
+          setVisionImage(null);
+        }}
+        className="absolute top-4 right-4 z-30 p-2 bg-black/20 hover:bg-red-500/80 backdrop-blur-md rounded-full text-white transition-colors duration-300"
+      >
+        <X size={16} />
+      </button>
+
+      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+        <p className="text-white font-bold text-sm bg-black/40 px-4 py-2 rounded-full backdrop-blur-md">Change Vision</p>
       </div>
-    )}
-    <input 
-      type="file" 
-      accept="image/*" 
-      onChange={handleVisionUpload} 
-      className="absolute inset-0 opacity-0 cursor-pointer z-10" 
-    />
+    </>
+  ) : (
+    <div className="absolute inset-0 flex items-end justify-end p-6 border-4 border-dashed border-sky-200/50 rounded-[40px]">
+      <div className="flex flex-col items-end text-right text-sky-800/50 dark:text-sky-200/40">
+        <ImageIcon size={32} strokeWidth={1.5} />
+        <p className="text-[10px] font-black mt-2 uppercase tracking-widest">Vision Board</p>
+        <p className="text-[8px] opacity-60 italic">Click to upload focus</p>
+      </div>
+    </div>
+  )}
+  
+  {/* The input covers the card except when clicking the X button */}
+  <input 
+    type="file" 
+    accept="image/*" 
+    onChange={handleVisionUpload} 
+    className="absolute inset-0 opacity-0 cursor-pointer z-20" 
+  />
+</div>
+
   </motion.div>
 
   
