@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import "./globals.css";
 import { Nunito } from 'next/font/google';
-
+import SidebarWrapper from "@/components/sidebarwrapper";
 
 const nunito = Nunito({ 
   subsets: ['latin'],
@@ -18,11 +18,23 @@ export default function RootLayout({
   children,
 }: {
   children: React.ReactNode
-}) {
+}) { 
+
   return (
-    <html lang="en" className={`${nunito.variable} font-sans`}>
+    <html lang="en" className={`${nunito.variable} font-sans`}suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            (function() {
+              const saved = localStorage.getItem('theme');
+              const isDark = saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
+              if (isDark) document.documentElement.classList.add('dark');
+            })()
+          `
+        }} /></head>
       <body className="antialiased">
         {children}
+       <SidebarWrapper />
       </body>
     </html>
   )

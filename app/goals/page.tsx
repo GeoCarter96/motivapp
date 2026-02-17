@@ -147,18 +147,26 @@ export default function GoalsPage() {
   return (
     <main className="min-h-screen bg-[#b9e2f5] relative overflow-hidden flex flex-col items-center pt-6 px-6 pb-20">
       
-     <motion.button
+    <motion.button
   onClick={() => router.push('/intro')}
-  initial={{ x: -20, opacity: 0 }}
-  animate={{ x: 0, opacity: 1 }}
-  whileHover={{ x: -5, backgroundColor: "rgba(255, 255, 255, 0.5)" }}
-  className="hidden md:flex absolute top-10 left-10 z-[100] items-center gap-2 px-6 py-3 
+  initial={{ opacity: 0 }}
+  animate={{ opacity: 1 }}
+  whileHover={{ scale: 1.05, backgroundColor: "rgba(255, 255, 255, 0.5)" }}
+  whileTap={{ scale: 0.95 }}
+  /* Hidden on mobile, fixed bottom-left on tablet, absolute top-left on desktop */
+  className="hidden md:flex fixed lg:absolute 
+             bottom-10 lg:bottom-auto lg:top-10 
+             left-10 
+             z-40 items-center gap-2 px-5 py-3 
              bg-white/30 backdrop-blur-md border border-white/50 rounded-full 
              text-[#526D82] font-black transition-all shadow-lg"
 >
   <ArrowLeft size={20} />
   
 </motion.button>
+
+
+
      <div className="w-full max-w-4xl flex flex-col md:flex-row gap-6 mb-12 z-20 items-stretch">
 
   <motion.div 
