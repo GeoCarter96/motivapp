@@ -205,12 +205,12 @@ export default function GoalsPage() {
 </motion.div>
 
 
-   <div className="relative w-full h-48 bg-white/20 dark:bg-slate-800/20 backdrop-blur-md rounded-[40px] border border-white/30 dark:border-slate-700/50 overflow-hidden group">
+   <div className="relative w-full h-95 bg-white/20 dark:bg-slate-800/20 backdrop-blur-md rounded-[40px] border border-white/30 dark:border-slate-700/50 overflow-hidden group">
   {visionImage ? (
     <>
       <img 
         src={visionImage} 
-        className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700" 
+        className="absolute   inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700" 
         alt="Vision" 
       />
       {/* Remove Button - Top Right */}
@@ -232,8 +232,8 @@ export default function GoalsPage() {
     <div className="absolute inset-0 flex items-end justify-end p-6 border-4 border-dashed border-sky-200/50 rounded-[40px]">
       <div className="flex flex-col items-end text-right text-sky-800/50 dark:text-sky-200/40">
         <ImageIcon size={32} strokeWidth={1.5} />
-        <p className="text-[10px] font-black mt-2 uppercase tracking-widest">Vision Board</p>
-        <p className="text-[8px] opacity-60 italic">Click to upload focus</p>
+        <p className="text-[10px] font-black mt-2 text-black uppercase tracking-widest">Vision Board</p>
+        <p className="text-[8px] opacity-60 italic text-black">Click to upload focus</p>
       </div>
     </div>
   )}
