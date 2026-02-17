@@ -157,7 +157,7 @@ useEffect(() => {
   if (!mounted) return null;
 
   return (
-    <main className="min-h-screen bg-[#b9e2f5] dark:bg-slate-950 transition-colors duration-500 relative overflow-hidden flex flex-col items-center pt-12 px-6 pb-20">
+    <main className="min-h-screen bg-[#b9e2f5] relative overflow-hidden flex flex-col items-center pt-12 px-6 pb-20">
       
       {/* Background Decor */}
       <div className="absolute inset-0 z-0 opacity-40 pointer-events-none" 
