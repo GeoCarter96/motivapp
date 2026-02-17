@@ -36,7 +36,7 @@ export default function GoalsPage() {
      const router = useRouter();
   const [newGoal, setNewGoal] = useState("");
   const [minutes, setMinutes] = useState("");
-  const [isResetting, setIsResetting] = useState(false);
+ 
   const [showArchive, setShowArchive] = useState(false);
   const [visionImage, setVisionImage] = useState<string | null>(null);
   const [motivation, setMotivation] = useState("");
@@ -95,11 +95,19 @@ export default function GoalsPage() {
   }, []);
 
   const formatTime = (seconds: number | null) => {
-    if (seconds === null) return "--:--";
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+  if (seconds === null) return "--:--:--";
+  
+  const hrs = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+
+  const hDisplay = hrs > 0 ? `${hrs}:` : "";
+  const mDisplay = hrs > 0 ? mins.toString().padStart(2, '0') : mins;
+  const sDisplay = secs.toString().padStart(2, '0');
+
+  return `${hDisplay}${mDisplay}:${sDisplay}`;
+};
+
 
   const addGoal = (e: React.FormEvent) => {
     e.preventDefault();
@@ -205,21 +213,24 @@ export default function GoalsPage() {
 </motion.div>
 
 
-   <div className="relative w-full h-95 bg-white/20 dark:bg-slate-800/20 backdrop-blur-md rounded-[40px] border border-white/30 dark:border-slate-700/50 overflow-hidden group">
+  <div className="relative w-full h-95 min-h-[150px] max-h-[400px] bg-white/20 dark:bg-slate-800/20 backdrop-blur-md rounded-[40px] border border-white/30 dark:border-slate-700/50 overflow-hidden group">
   {visionImage ? (
-    <>
+    <div className="relative w-full h-full max-h-[400px]">
       <img 
         src={visionImage} 
-        className="absolute   inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700" 
+        /* max-h-[400px] and object-cover ensure it never grows too long */
+        className="w-full h-auto max-h-[400px] object-cover block opacity-90 group-hover:scale-105 transition-transform duration-700" 
         alt="Vision" 
       />
-      {/* Remove Button - Top Right */}
+      
+      {/* Remove Button */}
       <button 
         onClick={(e) => {
           e.preventDefault();
+          e.stopPropagation();
           setVisionImage(null);
         }}
-        className="absolute top-4 right-4 z-30 p-2 bg-black/20 hover:bg-red-500/80 backdrop-blur-md rounded-full text-white transition-colors duration-300"
+        className="absolute top-4 right-4 z-30 p-2 bg-black/40 hover:bg-red-500/80 backdrop-blur-md rounded-full text-white transition-all active:scale-90"
       >
         <X size={16} />
       </button>
@@ -227,7 +238,7 @@ export default function GoalsPage() {
       <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
         <p className="text-white font-bold text-sm bg-black/40 px-4 py-2 rounded-full backdrop-blur-md">Change Vision</p>
       </div>
-    </>
+    </div>
   ) : (
     <div className="absolute inset-0 flex items-end justify-end p-6 border-4 border-dashed border-sky-200/50 rounded-[40px]">
       <div className="flex flex-col items-end text-right text-sky-800/50 dark:text-sky-200/40">
@@ -238,7 +249,6 @@ export default function GoalsPage() {
     </div>
   )}
   
-  {/* The input covers the card except when clicking the X button */}
   <input 
     type="file" 
     accept="image/*" 
