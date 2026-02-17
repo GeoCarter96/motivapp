@@ -18,6 +18,7 @@ interface Goal {
   timeLeft: number | null;
   isActive: boolean;
   subtasks: Subtask[];
+   expiryTimestamp: number | null;
 }
 
 const STORAGE_KEY = 'user_goals_v2';
@@ -33,90 +34,99 @@ const MOTIVATIONS = [
 ];
 
 export default function GoalsPage() {
-     const router = useRouter();
+       const router = useRouter();
+  const [mounted, setMounted] = useState(false);
   const [newGoal, setNewGoal] = useState("");
   const [minutes, setMinutes] = useState("");
- 
-  const [showArchive, setShowArchive] = useState(false);
   const [visionImage, setVisionImage] = useState<string | null>(null);
   const [motivation, setMotivation] = useState("");
- const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-   const archiveGoal = (goal: Goal) => {
+  const [showArchive, setShowArchive] = useState(false);
+
+  // Initialize with EMPTY arrays to prevent Hydration Mismatch
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [archive, setArchive] = useState<Goal[]>([]);
+   useEffect(() => {
+    const savedGoals = localStorage.getItem(STORAGE_KEY);
+    const savedArchive = localStorage.getItem(ARCHIVE_KEY);
+    const savedVision = localStorage.getItem(VISION_KEY);
     
-    const audio = new Audio('/sounds/shimmer.mp3'); 
-    audio.volume = 0.4;
-    audio.play().catch(() => {});
-
-    setArchive(prev => [goal, ...prev]);
-    setGoals(prev => prev.filter(g => g.id !== goal.id));
-  };
-
-
-  const [goals, setGoals] = useState<Goal[]>(() => {
-    if (typeof window === 'undefined') return [];
-    const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? JSON.parse(saved).value : [];
-  });
-
-  const [archive, setArchive] = useState<Goal[]>(() => {
-    if (typeof window === 'undefined') return [];
-    const saved = localStorage.getItem(ARCHIVE_KEY);
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  
-  useEffect(() => {
-    setVisionImage(localStorage.getItem(VISION_KEY));
+    if (savedGoals) {
+      const parsed = JSON.parse(savedGoals);
+      setGoals(parsed.value || []);
+    }
+    if (savedArchive) setArchive(JSON.parse(savedArchive));
+    if (savedVision) setVisionImage(savedVision);
+    
     setMotivation(MOTIVATIONS[Math.floor(Math.random() * MOTIVATIONS.length)]);
+    setMounted(true); // Now safe to render interactive elements
   }, []);
+   useEffect(() => {
+    if (!mounted) return;
 
- 
-  useEffect(() => {
-    const expiry = new Date().getTime() + 24 * 60 * 60 * 1000;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ value: goals, expiry }));
-    localStorage.setItem(ARCHIVE_KEY, JSON.stringify(archive));
-  }, [goals, archive]);
-
-  
-  useEffect(() => {
     const timer = setInterval(() => {
       setGoals(prev => prev.map(g => {
-        if (g.isActive && g.timeLeft && g.timeLeft > 0 && !g.completed) {
-          const newTime = g.timeLeft - 1;
-          return { ...g, timeLeft: newTime, isActive: newTime > 0 };
+        if (g.isActive && g.expiryTimestamp && !g.completed) {
+          const now = Date.now();
+          const remaining = Math.max(0, Math.floor((g.expiryTimestamp - now) / 1000));
+          
+          // Sound at zero
+          if (remaining === 0 && g.timeLeft && g.timeLeft > 0) {
+            const audio = new Audio('https://assets.mixkit.co');
+            audio.volume = 0.4;
+            audio.play().catch(() => {});
+          }
+
+          return { ...g, timeLeft: remaining, isActive: remaining > 0 };
         }
         return g;
       }));
     }, 1000);
     return () => clearInterval(timer);
-  }, []);
-
-  const formatTime = (seconds: number | null) => {
-  if (seconds === null) return "--:--:--";
-  
-  const hrs = Math.floor(seconds / 3600);
-  const mins = Math.floor((seconds % 3600) / 60);
-  const secs = seconds % 60;
-
-  const hDisplay = hrs > 0 ? `${hrs}:` : "";
-  const mDisplay = hrs > 0 ? mins.toString().padStart(2, '0') : mins;
-  const sDisplay = secs.toString().padStart(2, '0');
-
-  return `${hDisplay}${mDisplay}:${sDisplay}`;
+  }, [mounted]);
+  const toggleSubtask = (goalId: number, subId: number) => {
+  setGoals(prevGoals => prevGoals.map(g => 
+    g.id === goalId 
+      ? {
+          ...g, 
+          subtasks: g.subtasks.map(s => 
+            s.id === subId ? { ...s, completed: !s.completed } : s
+          )
+        } 
+      : g
+  ));
 };
 
+  const archiveGoal = (goal: Goal) => {
+  // Play success sound
+  const audio = new Audio('https://assets.mixkit.co'); 
+  audio.volume = 0.4;
+  audio.play().catch(() => {});
+
+  // Update lists
+  setArchive(prev => [goal, ...prev]);
+  setGoals(prev => prev.filter(g => g.id !== goal.id));
+};
+
+
+  // 3. SAVE TO STORAGE
+  useEffect(() => {
+    if (!mounted) return;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ value: goals }));
+    localStorage.setItem(ARCHIVE_KEY, JSON.stringify(archive));
+  }, [goals, archive, mounted]);
 
   const addGoal = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newGoal.trim() || !minutes) return;
-    const goalToAdd: Goal = {
+
+    const durationSec = parseInt(minutes) * 60;
+    const expiry = Date.now() + (durationSec * 1000);
+ const goalToAdd: Goal = {
       id: Date.now(),
       text: newGoal,
       completed: false,
-      timeLeft: parseInt(minutes) * 60,
+      timeLeft: durationSec,
+      expiryTimestamp: expiry, // Store the absolute end time
       isActive: true,
       subtasks: []
     };
@@ -124,33 +134,45 @@ export default function GoalsPage() {
     setNewGoal("");
     setMinutes("");
   };
-
+  const formatTime = (seconds: number | null) => {
+    if (seconds === null) return "--:--:--";
+    if (seconds <= 0) return "00:00";
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    const hDisplay = hrs > 0 ? `${hrs}:` : "";
+    const mDisplay = hrs > 0 ? mins.toString().padStart(2, '0') : mins;
+    const sDisplay = secs.toString().padStart(2, '0');
+    return `${hDisplay}${mDisplay}:${sDisplay}`;
+  };
   const addSubtask = (goalId: number, text: string) => {
-    if (!text.trim()) return;
-    setGoals(goals.map(g => g.id === goalId ? {
-      ...g, subtasks: [...g.subtasks, { id: Date.now(), text, completed: false }]
-    } : g));
-  };
-
-  const toggleSubtask = (goalId: number, subId: number) => {
-    setGoals(goals.map(g => g.id === goalId ? {
-      ...g, subtasks: g.subtasks.map(s => s.id === subId ? { ...s, completed: !s.completed } : s)
-    } : g));
-  };
-
+  if (!text.trim()) return;
+  setGoals(prevGoals => prevGoals.map(g => 
+    g.id === goalId 
+      ? {
+          ...g, 
+          subtasks: [...g.subtasks, { id: Date.now(), text, completed: false }]
+        } 
+      : g
+  ));
+};
 
   const handleVisionUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64 = reader.result as string;
-        setVisionImage(base64);
-        localStorage.setItem(VISION_KEY, base64);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  const file = e.target.files?.[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = reader.result as string;
+      setVisionImage(base64);
+      localStorage.setItem(VISION_KEY, base64); // Persist the image string
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
+   if (!mounted) {
+    return <div className="min-h-screen bg-[#b9e2f5]" />; 
+  }
 
   return (
     <main className="min-h-screen bg-[#b9e2f5] relative overflow-hidden flex flex-col items-center pt-6 px-6 pb-20">
